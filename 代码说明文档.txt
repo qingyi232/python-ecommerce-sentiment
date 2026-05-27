@@ -1,0 +1,507 @@
+========================================
+  电商评论情感分析与需求挖掘系统
+  代码说明文档
+========================================
+
+
+========================================
+目录
+========================================
+一、项目概述
+二、技术栈
+三、项目目录结构
+四、后端代码说明
+五、前端代码说明
+六、数据库设计
+七、API 接口文档
+八、核心算法说明
+九、数据流说明
+
+
+========================================
+一、项目概述
+========================================
+
+本系统是一个基于 Python 的电商平台商品评论情感分析与用户需求挖掘平台。
+
+核心功能：
+1. 数据采集：支持京东等电商平台评论数据爬取
+2. 情感分析：基于 SnowNLP / BERT 对评论进行正面/负面/中性分类
+3. 需求挖掘：基于 LDA 主题模型提取用户核心需求和关键词
+4. 可视化展示：多维度 ECharts 图表展示分析结果
+5. 数据管理：商品、评论、用户、爬取任务的增删改查
+
+系统角色：
+- 管理员（admin）：拥有所有功能权限，包括用户管理
+- 商家（merchant）：查看分析数据、管理商品
+- 普通用户（user）：查看分析结果
+
+
+========================================
+二、技术栈
+========================================
+
+【后端】
+- 语言：Python 3.9+
+- Web 框架：Flask 3.0
+- ORM：Flask-SQLAlchemy 3.1（操作 MySQL）
+- 认证：Flask-JWT-Extended（JWT Token 认证）
+- 跨域：Flask-CORS
+- NLP：SnowNLP（情感分析）、jieba（中文分词）
+- 主题模型：gensim（LDA 算法）
+- 爬虫：Scrapy / requests
+- 可视化：matplotlib / wordcloud
+
+【前端】
+- 框架：Vue 3（Composition API + script setup）
+- 构建工具：Vite 5
+- UI 组件库：Element Plus 2.4
+- 图表库：ECharts 5.4 + echarts-wordcloud
+- 路由：Vue Router 4
+- HTTP 客户端：Axios
+- CSS 预处理：Sass
+
+【数据库】
+- MySQL 8.0（字符集 utf8mb4）
+
+【前后端通信】
+- RESTful API
+- JSON 数据格式
+- JWT Bearer Token 认证
+- Vite 代理转发 /api → Flask 后端
+
+
+========================================
+三、项目目录结构
+========================================
+
+项目根目录/
+├── backend/                    # Python 后端
+│   ├── app/                    # Flask 应用主目录
+│   │   ├── __init__.py         # Flask 应用工厂（create_app）
+│   │   ├── models/             # 数据库模型（ORM）
+│   │   │   ├── user.py         # 用户模型
+│   │   │   ├── product.py      # 商品模型
+│   │   │   ├── review.py       # 评论模型
+│   │   │   ├── sentiment.py    # 情感分析结果模型
+│   │   │   ├── demand.py       # 需求挖掘结果模型
+│   │   │   └── crawl_task.py   # 爬取任务模型
+│   │   ├── routes/             # API 路由（控制器）
+│   │   │   ├── auth.py         # 登录/注册/个人信息
+│   │   │   ├── user.py         # 用户管理（仅管理员）
+│   │   │   ├── review.py       # 评论 + 商品 CRUD
+│   │   │   ├── analysis.py     # 情感分析 + 需求挖掘
+│   │   │   ├── crawl.py        # 爬取任务管理
+│   │   │   ├── dashboard.py    # 数据总览统计
+│   │   │   ├── visualization.py# 可视化图表 API
+│   │   │   └── upload.py       # 文件上传
+│   │   ├── services/           # 业务逻辑层
+│   │   │   ├── sentiment_service.py  # 情感分析服务
+│   │   │   ├── demand_service.py     # 需求挖掘服务
+│   │   │   ├── crawl_service.py      # 爬虫服务
+│   │   │   └── text_processor.py     # 文本预处理
+│   │   └── utils/              # 工具函数
+│   │       └── response.py     # 统一响应格式
+│   ├── crawler/                # 爬虫模块
+│   │   └── jd_spider.py        # 京东评论爬虫
+│   ├── config.py               # 配置文件
+│   ├── run.py                  # 启动入口
+│   ├── init_db.py              # 数据库初始化脚本
+│   ├── create_db.sql           # 建库 SQL
+│   └── requirements.txt        # Python 依赖清单
+│
+├── frontend/                   # Vue 3 前端
+│   ├── src/
+│   │   ├── api/
+│   │   │   └── index.js        # API 接口封装（Axios）
+│   │   ├── layout/
+│   │   │   └── MainLayout.vue  # 主布局（侧边栏+顶栏）
+│   │   ├── router/
+│   │   │   └── index.js        # 路由配置
+│   │   ├── views/              # 页面组件
+│   │   │   ├── Login.vue       # 登录/注册页
+│   │   │   ├── Dashboard.vue   # 数据总览
+│   │   │   ├── Products.vue    # 商品管理
+│   │   │   ├── Reviews.vue     # 评论管理
+│   │   │   ├── Sentiment.vue   # 情感分析
+│   │   │   ├── Demand.vue      # 需求挖掘
+│   │   │   ├── Crawl.vue       # 数据采集
+│   │   │   ├── Visualization.vue # 可视化展示
+│   │   │   └── Users.vue       # 用户管理
+│   │   ├── App.vue             # 根组件
+│   │   └── main.js             # 入口文件
+│   ├── index.html              # HTML 模板
+│   ├── vite.config.js          # Vite 配置（含代理）
+│   └── package.json            # 前端依赖清单
+
+
+========================================
+四、后端代码说明
+========================================
+
+【4.1 应用入口】
+- run.py：创建 Flask 应用并启动开发服务器（端口 5000）
+- app/__init__.py：应用工厂函数 create_app()
+  - 初始化 SQLAlchemy、JWT、CORS
+  - 注册所有蓝图（Blueprint）路由
+  - 自动创建数据库表（db.create_all）
+
+【4.2 数据模型 models/】
+- user.py (User)：
+  字段：id, username, password_hash, email, nickname, avatar, role, status, created_at
+  方法：set_password()（bcrypt 哈希）, check_password()（密码验证）
+
+- product.py (Product)：
+  字段：id, name, category, brand, price, image_url, source_platform, review_count, avg_sentiment
+  关联：一对多关联 Review
+
+- review.py (Review)：
+  字段：id, product_id, content, cleaned_content, rating, reviewer_name, sentiment_score, sentiment_label, is_analyzed, keywords
+  关联：外键关联 Product
+
+- sentiment.py (SentimentResult)：
+  字段：id, product_id, total_reviews, positive/negative/neutral_count, avg_score, positive/negative/neutral_ratio, top_positive/negative_words, algorithm, analyzed_at
+
+- demand.py (DemandTopic + DemandKeyword)：
+  DemandTopic：id, product_id, topic_name, topic_words, weight
+  DemandKeyword：id, product_id, keyword, frequency
+
+- crawl_task.py (CrawlTask)：
+  字段：id, task_name, platform, keyword, target_url, status, success_count, fail_count, created_by
+
+【4.3 路由 routes/】
+- auth.py：登录(POST /login)、注册(POST /register)、获取/更新个人信息
+- review.py：评论 CRUD + 商品 CRUD + 分类查询
+- analysis.py：运行情感分析、获取分析结果、运行需求挖掘、获取挖掘结果
+- crawl.py：爬取任务创建、启动、删除
+- dashboard.py：统计数据、最新评论、分类统计、情感趋势
+- user.py：用户列表、状态更新、删除（仅管理员权限）
+- upload.py：图片上传与访问
+- visualization.py：服务端 matplotlib 图表生成（备用）
+
+【4.4 服务层 services/】
+- sentiment_service.py：
+  analyze() 方法遍历所有评论 → 文本清洗 → SnowNLP/BERT 计算情感分值 → 分类为正面/负面/中性 → 存入 SentimentResult 表
+  
+- demand_service.py：
+  analyze() 方法收集评论 → jieba 分词 → 构建词袋 → gensim LDA 主题模型 → 提取主题和关键词 → 存入 DemandTopic/DemandKeyword 表
+
+- crawl_service.py：
+  支持真实爬取（Scrapy/requests）和示例数据
+  爬取的评论自动存入 Product + Review 表
+
+- text_processor.py：
+  clean_text()：去除 HTML/URL/特殊字符
+  segment()：jieba 分词 + 去停用词
+  extract_keywords()：TF-IDF 关键词提取
+
+
+========================================
+五、前端代码说明
+========================================
+
+【5.1 API 封装 api/index.js】
+- 基于 Axios 创建实例，baseURL 为 /api
+- 请求拦截器：自动附加 JWT Token
+- 响应拦截器：统一处理错误（401 跳转登录、弹出错误消息）
+- 导出各模块 API：authApi, reviewApi, analysisApi, crawlApi, dashboardApi, userApi, visualizationApi, uploadApi
+
+【5.2 路由配置 router/index.js】
+- /login → 登录页
+- / → 主布局（含侧边栏），子路由：
+  - /dashboard → 数据总览
+  - /products → 商品管理
+  - /reviews → 评论管理
+  - /sentiment → 情感分析
+  - /demand → 需求挖掘
+  - /crawl → 数据采集
+  - /visualization → 可视化展示
+  - /users → 用户管理（仅管理员可见）
+
+【5.3 页面组件说明】
+
+Login.vue（登录/注册）：
+- 左侧品牌展示区 + 右侧登录/注册表单
+- 支持登录和注册切换
+- 内置演示账号快捷填入按钮
+- JWT Token 存储在 localStorage
+
+Dashboard.vue（数据总览）：
+- 4个统计卡片（商品数、评论数、已分析、用户数）
+- 情感分布饼图（ECharts）
+- 情感趋势折线图（ECharts）
+- 商品分类统计柱状图（ECharts）
+- 最新评论列表
+- 所有数据通过 4 个 API 并行加载
+
+Products.vue（商品管理）：
+- 搜索框 + 分类筛选 + 分页表格
+- 添加商品对话框（支持图片上传和 URL）
+- 编辑商品（复用添加对话框）
+- 删除商品（二次确认，级联删除评论）
+
+Reviews.vue（评论管理）：
+- 关键词搜索 + 情感类型筛选
+- 分页表格显示评论详情
+- 删除评论（二次确认）
+
+Sentiment.vue（情感分析）：
+- 左侧：商品选择 + 算法选择（SnowNLP/BERT）+ 分析按钮
+- 右侧：分析结果展示
+  - 情感分布饼图
+  - 评论情感散点图（评分 vs 情感分值）
+  - 评论列表（含进度条展示情感分值）
+- 点击"开始分析"后端真实运行 NLP 算法
+
+Demand.vue（需求挖掘）：
+- 左侧：商品选择 + 主题数量滑块 + 挖掘按钮
+- 右侧：LDA 分析结果
+  - 关键词词云图（echarts-wordcloud）
+  - 主题权重分布玫瑰图
+  - 高频关键词 Top20 横向柱状图
+- 左侧下方：主题列表及关键词标签
+
+Crawl.vue（数据采集）：
+- 任务列表表格（状态筛选、分页）
+- 新建任务对话框（任务名、平台、关键词、URL）
+- 启动按钮（仅待执行状态可启动）
+- 删除按钮（运行中不可删除）
+
+Visualization.vue（可视化展示）：
+- 商品选择下拉框
+- 选择商品后展示 5 个图表：
+  1. 情感分布环形图
+  2. 评分分布柱状图
+  3. 情感分值分布直方图
+  4. 评分与情感关联散点图
+  5. 各商品对比雷达图
+- 未选商品时显示空状态提示
+- 未分析时提示先去情感分析页面
+
+Users.vue（用户管理，仅管理员可见）：
+- 搜索 + 角色筛选
+- 用户状态开关（启用/禁用）
+- 删除用户（管理员不可删除自己）
+
+
+========================================
+六、数据库设计
+========================================
+
+数据库名：sentiment_analysis
+字符集：utf8mb4
+
+【users 表】用户信息
+| 字段           | 类型         | 说明          |
+|---------------|-------------|---------------|
+| id            | INT PK      | 用户ID        |
+| username      | VARCHAR(50) | 用户名（唯一）|
+| password_hash | VARCHAR(256)| 密码哈希      |
+| email         | VARCHAR(100)| 邮箱          |
+| nickname      | VARCHAR(50) | 昵称          |
+| avatar        | VARCHAR(500)| 头像 URL      |
+| role          | VARCHAR(20) | 角色          |
+| status        | INT         | 状态 1启用/0禁用|
+| created_at    | DATETIME    | 注册时间      |
+
+【products 表】商品信息
+| 字段            | 类型          | 说明          |
+|----------------|--------------|---------------|
+| id             | INT PK       | 商品ID        |
+| name           | VARCHAR(200) | 商品名称      |
+| category       | VARCHAR(50)  | 分类          |
+| brand          | VARCHAR(100) | 品牌          |
+| price          | DECIMAL(10,2)| 价格          |
+| image_url      | VARCHAR(500) | 图片地址      |
+| source_platform| VARCHAR(50)  | 来源平台      |
+| review_count   | INT          | 评论数量      |
+| avg_sentiment  | FLOAT        | 平均情感分    |
+| description    | TEXT         | 商品描述      |
+| created_at     | DATETIME     | 创建时间      |
+
+【reviews 表】评论数据
+| 字段              | 类型         | 说明            |
+|------------------|-------------|-----------------|
+| id               | INT PK      | 评论ID          |
+| product_id       | INT FK      | 所属商品ID      |
+| content          | TEXT        | 评论原文        |
+| cleaned_content  | TEXT        | 清洗后文本      |
+| rating           | INT         | 用户评分 1-5    |
+| reviewer_name    | VARCHAR(100)| 评论者昵称      |
+| sentiment_score  | FLOAT       | 情感分值 0-1    |
+| sentiment_label  | VARCHAR(20) | 情感标签        |
+| is_analyzed      | BOOLEAN     | 是否已分析      |
+| keywords         | TEXT        | 关键词 JSON     |
+| source_platform  | VARCHAR(50) | 来源平台        |
+| review_time      | DATETIME    | 评论时间        |
+
+【sentiment_results 表】情感分析结果
+| 字段               | 类型    | 说明              |
+|-------------------|--------|-------------------|
+| id                | INT PK | 结果ID            |
+| product_id        | INT FK | 商品ID            |
+| total_reviews     | INT    | 总评论数          |
+| positive_count    | INT    | 正面评论数        |
+| negative_count    | INT    | 负面评论数        |
+| neutral_count     | INT    | 中性评论数        |
+| avg_score         | FLOAT  | 平均情感分        |
+| positive_ratio    | FLOAT  | 正面占比 %        |
+| negative_ratio    | FLOAT  | 负面占比 %        |
+| neutral_ratio     | FLOAT  | 中性占比 %        |
+| top_positive_words| TEXT   | 正面高频词 JSON   |
+| top_negative_words| TEXT   | 负面高频词 JSON   |
+| algorithm         | VARCHAR| 使用算法          |
+| analyzed_at       | DATETIME| 分析时间          |
+
+【demand_topics 表】LDA 主题
+| 字段         | 类型    | 说明        |
+|-------------|--------|-------------|
+| id          | INT PK | 主题ID      |
+| product_id  | INT FK | 商品ID      |
+| topic_name  | VARCHAR| 主题名称    |
+| topic_words | TEXT   | 主题词 JSON |
+| weight      | FLOAT  | 主题权重    |
+
+【demand_keywords 表】需求关键词
+| 字段       | 类型    | 说明        |
+|-----------|--------|-------------|
+| id        | INT PK | 关键词ID    |
+| product_id| INT FK | 商品ID      |
+| keyword   | VARCHAR| 关键词      |
+| frequency | INT    | 出现频率    |
+
+【crawl_tasks 表】爬取任务
+| 字段          | 类型    | 说明          |
+|--------------|--------|---------------|
+| id           | INT PK | 任务ID        |
+| task_name    | VARCHAR| 任务名称      |
+| platform     | VARCHAR| 目标平台      |
+| keyword      | VARCHAR| 搜索关键词    |
+| target_url   | VARCHAR| 目标URL       |
+| status       | VARCHAR| 状态          |
+| success_count| INT    | 成功数        |
+| fail_count   | INT    | 失败数        |
+| created_by   | INT FK | 创建者ID      |
+| created_at   | DATETIME| 创建时间      |
+| started_at   | DATETIME| 开始时间      |
+| finished_at  | DATETIME| 结束时间      |
+
+
+========================================
+七、API 接口文档
+========================================
+
+基础 URL：http://localhost:5000/api
+认证方式：Bearer Token（除登录注册外均需）
+
+【认证模块 /auth】
+POST /auth/login          登录
+POST /auth/register       注册
+GET  /auth/profile        获取个人信息
+PUT  /auth/profile        更新个人信息
+
+【商品管理 /reviews】
+GET    /reviews/products         商品列表（支持分页/搜索/分类）
+POST   /reviews/products         添加商品
+GET    /reviews/products/:id     商品详情
+PUT    /reviews/products/:id     编辑商品
+DELETE /reviews/products/:id     删除商品（级联删除评论）
+GET    /reviews/categories       获取分类列表
+
+【评论管理 /reviews】
+GET    /reviews/                 评论列表（支持分页/搜索/情感筛选）
+GET    /reviews/:id              评论详情
+POST   /reviews/                 添加评论
+DELETE /reviews/:id              删除评论
+
+【分析模块 /analysis】
+POST /analysis/sentiment/run           运行情感分析
+GET  /analysis/sentiment/results       获取分析结果列表
+GET  /analysis/sentiment/detail/:id    获取商品分析详情
+POST /analysis/demand/run              运行需求挖掘
+GET  /analysis/demand/results          获取挖掘结果
+GET  /analysis/comparison              商品对比分析
+
+【数据采集 /crawl】
+GET    /crawl/tasks              任务列表
+POST   /crawl/tasks              创建任务
+GET    /crawl/tasks/:id          任务详情
+POST   /crawl/tasks/:id/start    启动任务
+DELETE /crawl/tasks/:id          删除任务
+
+【数据总览 /dashboard】
+GET /dashboard/stats             统计数据
+GET /dashboard/recent-reviews    最新评论
+GET /dashboard/top-products      热门商品
+GET /dashboard/category-stats    分类统计
+GET /dashboard/sentiment-trend   情感趋势
+
+【用户管理 /users（仅管理员）】
+GET    /users/        用户列表
+PUT    /users/:id     更新用户信息/状态
+DELETE /users/:id     删除用户
+
+【文件上传 /upload】
+POST /upload/image           上传图片
+GET  /upload/files/:filename 访问图片
+
+
+========================================
+八、核心算法说明
+========================================
+
+【8.1 情感分析 - SnowNLP】
+SnowNLP 是一个基于朴素贝叶斯的中文情感分析库。
+流程：
+  评论原文 → 文本清洗 → SnowNLP.sentiments → 情感分值(0~1)
+  分值 >= 0.6 → 正面
+  分值 <= 0.4 → 负面
+  其他 → 中性
+
+【8.2 情感分析 - BERT（可选）】
+使用 HuggingFace transformers 加载预训练的中文情感分析模型。
+模型：uer/roberta-base-finetuned-jd-binary-chinese
+流程：
+  评论原文 → 截断到512字符 → BERT 推理 → positive/negative 标签+置信度 → 映射为 0~1 分值
+  如果 BERT 模型加载失败，自动回退到 SnowNLP
+
+【8.3 需求挖掘 - LDA 主题模型】
+LDA（Latent Dirichlet Allocation）潜在狄利克雷分配。
+流程：
+  评论集合 → jieba 分词 → 去停用词 → 构建词袋(Bag of Words) → gensim LDA 训练
+  → 输出 N 个主题（每个主题含多个关键词和权重）
+  → 统计所有评论中关键词频率
+
+【8.4 文本预处理】
+- 去除 HTML 标签、URL、邮箱
+- 去除特殊字符和多余空格
+- jieba 精确模式分词
+- 去除停用词（长度<2 或在停用词表中）
+- TF-IDF 关键词提取
+
+
+========================================
+九、数据流说明
+========================================
+
+【评论分析全流程】
+  1. 数据来源：init_db.py 预置 / 爬虫采集 / 手动录入
+  2. 存储：评论存入 reviews 表
+  3. 情感分析：用户点击"开始分析"
+     → 后端读取该商品的所有评论
+     → 逐条进行文本清洗 + SnowNLP/BERT 打分
+     → 更新 reviews 表的 sentiment_score 和 sentiment_label
+     → 汇总统计写入 sentiment_results 表
+     → 更新 products 表的 avg_sentiment
+  4. 需求挖掘：用户点击"开始挖掘"
+     → 后端读取该商品的所有评论
+     → 分词 → LDA 主题建模
+     → 写入 demand_topics 和 demand_keywords 表
+  5. 可视化：前端读取分析结果 → ECharts 渲染图表
+
+【数据实时性保证】
+  - 所有写操作（增删改）通过 SQLAlchemy 的 db.session.commit() 实时提交
+  - 删除商品时级联删除其所有评论
+  - 删除评论时自动更新商品的 review_count
+  - 运行分析时覆盖同商品同算法的旧结果
+  - 前端通过 API 实时查询最新数据，图表随数据变化

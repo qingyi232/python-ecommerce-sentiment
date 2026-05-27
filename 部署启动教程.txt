@@ -1,0 +1,349 @@
+========================================
+  电商评论情感分析与需求挖掘系统
+  部署启动教程（小白保姆级）
+========================================
+
+本教程将手把手指导你从零开始部署运行整个项目。
+即使你从未接触过编程环境，只要按步骤操作即可成功运行。
+
+
+========================================
+目录
+========================================
+一、环境要求概览
+二、安装 Python 3.9+
+三、安装 Node.js 18+
+四、安装 MySQL 8.0
+五、创建数据库
+六、启动后端（Flask）
+七、启动前端（Vue 3）
+八、初始化演示数据
+九、访问系统
+十、常见问题排查
+十一、测试账号密码
+
+
+========================================
+一、环境要求概览
+========================================
+
+你的电脑需要安装以下3个软件：
+
+| 软件       | 版本要求      | 用途           |
+|-----------|--------------|----------------|
+| Python    | 3.9 或更高    | 运行后端服务    |
+| Node.js   | 18 或更高     | 运行前端服务    |
+| MySQL     | 8.0 或更高    | 存储数据        |
+
+操作系统：Windows 10/11（推荐）、macOS、Linux 均可
+
+
+========================================
+二、安装 Python 3.9+
+========================================
+
+【下载地址】
+  官网：https://www.python.org/downloads/
+  推荐版本：Python 3.11.x 或 3.12.x
+  直达链接：https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
+
+【安装步骤】
+  1. 双击下载的 python-3.xx.x-amd64.exe
+  2. 在安装界面底部，务必勾选 "Add Python to PATH"（非常重要！）
+  3. 点击 "Install Now" 等待安装完成
+  4. 安装完成后点击 "Close"
+
+【验证安装】
+  打开命令提示符（Win+R 输入 cmd 回车），输入：
+    python --version
+  应显示类似：Python 3.11.9
+  
+  再输入：
+    pip --version
+  应显示类似：pip 24.x.x from ...
+
+【如果 python 命令不识别】
+  说明没有勾选 "Add to PATH"，需要手动添加：
+  1. 右键"此电脑" → 属性 → 高级系统设置 → 环境变量
+  2. 在系统变量中找到 Path，双击编辑
+  3. 新建，添加 Python 安装路径（如 C:\Users\你的用户名\AppData\Local\Programs\Python\Python311）
+  4. 再添加 Scripts 路径（如 C:\Users\你的用户名\AppData\Local\Programs\Python\Python311\Scripts）
+  5. 确定保存，重新打开 cmd
+
+
+========================================
+三、安装 Node.js 18+
+========================================
+
+【下载地址】
+  官网：https://nodejs.org/
+  推荐版本：Node.js 18 LTS 或 20 LTS
+  直达链接：https://nodejs.org/dist/v20.11.1/node-v20.11.1-x64.msi
+
+【安装步骤】
+  1. 双击下载的 node-vxx.xx.x-x64.msi
+  2. 一路点击 "Next"，保持默认设置
+  3. 安装完成后点击 "Finish"
+
+【验证安装】
+  打开新的命令提示符（必须重新打开），输入：
+    node --version
+  应显示类似：v20.11.1
+  
+  再输入：
+    npm --version
+  应显示类似：10.x.x
+
+
+========================================
+四、安装 MySQL 8.0
+========================================
+
+【下载地址】
+  官网：https://dev.mysql.com/downloads/installer/
+  直达链接：https://dev.mysql.com/get/Downloads/MySQLInstaller/mysql-installer-community-8.0.36.0.msi
+  
+  如果官网下载慢，可使用国内镜像：
+  清华镜像：https://mirrors.tuna.tsinghua.edu.cn/mysql/downloads/MySQL-8.0/
+
+【安装步骤】
+  1. 双击下载的安装包
+  2. 选择 "Developer Default" 或 "Server only"
+  3. 点击 "Execute" 安装所有组件
+  4. 在配置阶段：
+     - Config Type: 选 "Development Computer"
+     - 端口保持默认 3306
+     - Root 密码设为：root（重要！项目默认使用此密码）
+     - 其他保持默认
+  5. 点击 "Execute" 完成配置
+  6. 点击 "Finish"
+
+【验证安装】
+  打开命令提示符，输入：
+    mysql -u root -p
+  输入密码 root，如果成功进入 mysql> 提示符，说明安装成功。
+  输入 exit 退出。
+
+【如果 mysql 命令不识别】
+  需要将 MySQL 的 bin 目录添加到环境变量 Path：
+  通常路径为：C:\Program Files\MySQL\MySQL Server 8.0\bin
+
+
+========================================
+五、创建数据库
+========================================
+
+【方法一：命令行方式】
+  1. 打开命令提示符
+  2. 登录 MySQL：
+       mysql -u root -p
+     输入密码：root
+  3. 创建数据库：
+       CREATE DATABASE sentiment_analysis DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  4. 验证创建：
+       SHOW DATABASES;
+     应看到 sentiment_analysis 在列表中
+  5. 输入 exit 退出
+
+【方法二：使用项目自带 SQL 文件】
+  1. 打开命令提示符
+  2. 进入项目后端目录：
+       cd 项目路径\backend
+  3. 执行 SQL 文件：
+       mysql -u root -p < create_db.sql
+     输入密码 root
+
+【方法三：使用 Navicat 等图形化工具】
+  1. 打开 Navicat / DBeaver / MySQL Workbench
+  2. 连接 MySQL（地址 localhost，端口 3306，用户 root，密码 root）
+  3. 右键 → 新建数据库
+  4. 数据库名输入：sentiment_analysis
+  5. 字符集选：utf8mb4
+  6. 排序规则选：utf8mb4_unicode_ci
+
+
+========================================
+六、启动后端（Flask）
+========================================
+
+【步骤】
+  1. 打开命令提示符（或 PowerShell）
+
+  2. 进入后端目录：
+       cd 项目路径\backend
+     例如：cd F:\项目\backend
+
+  3. 安装 Python 依赖（首次运行需要，约需2-5分钟）：
+       pip install -r requirements.txt
+     
+     如果下载慢，使用国内镜像加速：
+       pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+  4. 初始化数据库表和演示数据：
+       python init_db.py
+     应输出：
+       数据库表已创建
+       已创建 5 个用户
+       已创建 8 个商品
+       已创建 120 条评论
+       已创建 4 个爬取任务
+
+  5. 启动后端服务：
+       python run.py
+     应输出：
+       * Running on http://127.0.0.1:5000
+     
+     看到此信息说明后端启动成功！
+     此窗口不要关闭，保持运行。
+
+
+========================================
+七、启动前端（Vue 3）
+========================================
+
+【步骤】
+  1. 打开一个新的命令提示符窗口（不要关闭后端窗口）
+
+  2. 进入前端目录：
+       cd 项目路径\frontend
+     例如：cd F:\项目\frontend
+
+  3. 安装前端依赖（首次运行需要，约需1-3分钟）：
+       npm install
+     
+     如果下载慢，使用国内镜像：
+       npm install --registry=https://registry.npmmirror.com
+
+  4. 启动前端开发服务：
+       npm run dev
+     应输出：
+       VITE v5.x.x ready in xxx ms
+       ➜ Local: http://localhost:3000/
+
+     看到此信息说明前端启动成功！
+     此窗口不要关闭，保持运行。
+
+
+========================================
+八、初始化演示数据（如需重置）
+========================================
+
+  如果需要重新初始化所有数据（会清空旧数据）：
+
+  1. 确保后端已停止运行（在后端窗口按 Ctrl+C）
+  2. 在后端目录执行：
+       python init_db.py
+  3. 重新启动后端：
+       python run.py
+
+
+========================================
+九、访问系统
+========================================
+
+  打开浏览器（推荐 Chrome / Edge），访问：
+
+    http://localhost:3000
+
+  使用以下演示账号登录：
+
+  【管理员】
+    用户名：admin
+    密码：admin123
+
+  【商家】
+    用户名：merchant1
+    密码：123456
+
+  【普通用户】
+    用户名：user1
+    密码：123456
+
+
+========================================
+十、常见问题排查
+========================================
+
+Q1：pip install 报错 "Microsoft Visual C++ is required"
+A：部分 Python 包需要 C++ 编译器
+   下载安装 Microsoft Build Tools：
+   https://visualstudio.microsoft.com/visual-cpp-build-tools/
+   安装时勾选 "C++ 桌面开发"
+
+Q2：npm install 报错
+A：尝试以下操作：
+   - 删除 node_modules 文件夹和 package-lock.json
+   - 重新运行 npm install
+   - 或使用 npm install --legacy-peer-deps
+
+Q3：MySQL 连接失败
+A：检查以下几点：
+   - MySQL 服务是否启动（Win+R 输入 services.msc 查看 MySQL80 服务）
+   - 用户名密码是否为 root/root
+   - 端口是否为 3306
+   如果 MySQL 密码不是 root，修改后端 config.py 文件中的数据库连接字符串
+
+Q4：后端启动报错 "No module named 'xxx'"
+A：说明某个依赖没安装成功
+   手动安装缺失的包：
+     pip install 包名
+   或重新安装所有依赖：
+     pip install -r requirements.txt
+
+Q5：前端页面空白
+A：按 F12 打开开发者工具查看 Console 是否有报错
+   常见原因：后端未启动，或端口被占用
+
+Q6：图表不显示
+A：确保：
+   1. 后端正在运行（http://localhost:5000）
+   2. 已登录系统
+   3. 在"情感分析"页面先对商品执行"开始分析"
+   4. 然后到"可视化展示"页面选择商品查看
+
+Q7：端口被占用
+A：如果 5000 或 3000 端口被占用：
+   - 查看占用进程：netstat -ano | findstr :5000
+   - 结束进程：taskkill /PID 进程号 /F
+
+
+========================================
+十一、测试账号密码
+========================================
+
+  所有演示账号：
+
+  管理员：admin / admin123
+  商家1：merchant1 / 123456
+  商家2：merchant2 / 123456
+  用户1：user1 / 123456
+  用户2：user2 / 123456
+  用户3：user3 / 123456
+
+  也可以在登录页面注册新账号。
+
+  数据库信息：
+  主机：localhost
+  端口：3306
+  数据库名：sentiment_analysis
+  用户名：root
+  密码：root
+
+
+========================================
+  快速启动备忘（给有经验的开发者）
+========================================
+
+  # 终端1：后端
+  cd backend
+  pip install -r requirements.txt
+  python init_db.py
+  python run.py
+
+  # 终端2：前端
+  cd frontend
+  npm install
+  npm run dev
+
+  # 浏览器访问
+  http://localhost:3000
